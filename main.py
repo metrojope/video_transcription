@@ -13,7 +13,7 @@ warnings.filterwarnings("ignore", message="FP16 is not supported on CPU; using F
 
 # Set your OpenAI API key
 client = OpenAI(
-  api_key="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"
+  api_key=""
 )
 
 def download_video(url, output_path):
