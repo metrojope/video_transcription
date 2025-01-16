@@ -4,17 +4,9 @@ import whisper
 import warnings
 from yt_dlp import YoutubeDL
 from translate import Translator
-import tempfile
-from openai import OpenAI
-import requests
 
 # Suppress specific warnings
 warnings.filterwarnings("ignore", message="FP16 is not supported on CPU; using FP32 instead")
-
-# Set your OpenAI API key
-client = OpenAI(
-  api_key=""
-)
 
 def download_video(url, output_path):
     ydl_opts = {"outtmpl": output_path, "format": "bestaudio/best"}
@@ -54,38 +46,14 @@ def transcribe_audio(audio_path):
 def translate_text(text, dest_language="pt"):
     translator = Translator(to_lang=dest_language)
     try:
-        translation = translator.translate(text)
-        return translation
+        # Split the text into smaller chunks
+        max_chunk_size = 500  # Adjust this value as needed
+        chunks = [text[i:i + max_chunk_size] for i in range(0, len(text), max_chunk_size)]
+        translated_chunks = [translator.translate(chunk) for chunk in chunks]
+        return ' '.join(translated_chunks)
     except Exception as e:
         print(f"Translation failed: {e}")
         return None
-
-def fetch_examples():
-    response = requests.get('http://127.0.0.1:8080/examples')
-    if response.status_code == 200:
-        return response.json()
-    else:
-        print("Failed to fetch examples")
-        return []
-
-def adapt_text_to_style(text):
-    examples = fetch_examples()
-    examples_text = "\n".join(examples)
-    prompt = f"{examples_text}\n\nAdapt this text to my style: {text}"
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        store=True,
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": prompt}
-        ],
-        max_tokens=500,
-        n=1,
-        stop=None,
-        temperature=0.7,
-    )
-    adapted_text = response.choices[0].message['content'].strip()
-    return adapted_text
 
 if __name__ == "__main__":
     while True:
@@ -131,21 +99,15 @@ if __name__ == "__main__":
         print("Translating transcription to Portuguese...")
         translation = translate_text(transcription, dest_language="pt")
         
-        # Step 5: Adapt the translated text to your style
-        print("Adapting translated text to your style...")
-        adapted_text = adapt_text_to_style(translation)
-        
-        # Step 6: Save transcription, translation, and adapted text to a text file
+        # Step 5: Save transcription and translation to a text file
         with open(transcription_file, "w", encoding="utf-8") as f:
             f.write("Original Transcription:\n")
             f.write(transcription)
             if translation:
                 f.write("\n\nTranslated to Portuguese:\n")
                 f.write(translation)
-                f.write("\n\nAdapted Text:\n")
-                f.write(adapted_text)
             else:
                 f.write("\n\nTranslation to Portuguese failed.")
         
-        # Step 7: Display results
-        print("Transcription, translation, and adapted text saved to:", transcription_file)
+        # Step 6: Display results
+        print("Transcription and translation saved to:", transcription_file)
