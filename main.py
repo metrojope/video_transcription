@@ -17,13 +17,6 @@ def extract_audio(video_path, audio_path):
     # Use the absolute path to ffmpeg
     ffmpeg_path = r"C:\ffmpeg\bin\ffmpeg.exe"  # Replace with the actual path to ffmpeg
 
-    # Check if ffmpeg is available
-    try:
-        subprocess.run([ffmpeg_path, "-version"], check=True)
-    except subprocess.CalledProcessError:
-        print("ffmpeg is not installed or not found in PATH.")
-        return
-
     # Generate a new filename if the audio file already exists
     base, ext = os.path.splitext(audio_path)
     counter = 1
